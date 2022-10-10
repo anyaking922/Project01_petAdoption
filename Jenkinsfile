@@ -4,7 +4,7 @@ pipeline {
     stage('Pull Source Code from GitHub') {
       steps {
         git branch: 'main',
-          credentialsId: 'git-credentials',
+          credentialsId: 'GitCred',
           url: 'https://github.com/anyaking922/Project01_petAdoption.git'
       }
     }
