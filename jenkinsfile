@@ -5,7 +5,7 @@ pipeline {
       steps {
         git branch: 'main',
           credentialsId: 'git-credentials',
-          url: 'https://github.com/anyaking922/PAC_W_S.git'
+          url: 'https://github.com/anyaking922/Project01_petAdoption.git'
       }
     }
     stage('Code Analysis') {
@@ -23,14 +23,14 @@ pipeline {
     stage('Send Artifacts') {
       steps {
         sshagent(['ansible-prv-key']) {
-          sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/pac-project/target/spring-petclinic-2.4.2.war ubuntu@3.250.38.182:/home/ubuntu/Docker'
+          sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/pac-project/target/spring-petclinic-2.4.2.war ec2-user@52.214.175.111:/home/ubuntu/Docker'
         }
       }
     }
     stage('Deploy Application') {
       steps {
         sshagent(['ansible-prv-key']) {
-          sh 'ssh -o strictHostKeyChecking=no ubuntu@3.250.38.182 "cd /home/ubuntu/Ansible && ansible-playbook playbook-dockerimage.yaml && ansible-playbook playbook-container.yaml && ansible-playbook playbook-newrelic.yaml"'
+          sh 'ssh -o strictHostKeyChecking=no ec2-user@52.214.175.111 "cd /home/ubuntu/Ansible && ansible-playbook playbook-dockerimage.yaml && ansible-playbook playbook-container.yaml && ansible-playbook playbook-newrelic.yaml"'
         }
       }
     }
