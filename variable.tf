@@ -11,7 +11,7 @@ variable "server_key" {
 
 variable "server_priv_key" {
   default     = "~/keypair/key"
-  description = "this is the path to my pub key"
+  description = "this is the path to my private key"
 }
 
 variable "port_mysql_database" {

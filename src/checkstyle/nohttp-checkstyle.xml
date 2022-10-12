@@ -5,3 +5,4 @@
 <module name="com.puppycrawl.tools.checkstyle.Checker">
 	<module name="io.spring.nohttp.checkstyle.check.NoHttpCheck"/>
 </module>
+yes
