@@ -11,13 +11,13 @@ pipeline {
               url: 'https://github.com/anyaking922/Project01_petAdoption.git'
           }      
     }
-    stage('Code Analysis') {
-      steps {
-        withSonarQubeEnv('sonar') {
-          sh "mvn compile sonar:sonar"
-        }
-      }
-    }
+    // stage('Code Analysis') {
+    //   steps {
+    //     withSonarQubeEnv('sonar') {
+    //       sh "mvn compile sonar:sonar"
+    //     }
+    //   }
+    // }
     stage('Build Code') {
       steps {
         sh 'mvn package -Dmaven.test.skip'
