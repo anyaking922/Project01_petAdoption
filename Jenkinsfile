@@ -27,7 +27,7 @@ pipeline {
     stage('Send Artifacts') {
       steps {
         sshagent(['ansible-prv-key']) {
-          sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/pac-project/target/spring-kingsley-petclinic-2.4.2.war ec2-user@54.229.122.183:/home/ubuntu/Docker'
+          sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/pac-project/target/spring-petclinic-2.4.2.war ec2-user@54.229.122.183:/home/ubuntu/Docker'
         }
       }
     }
