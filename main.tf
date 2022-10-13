@@ -497,7 +497,7 @@ EOT
 touch /opt/docker/docker-image.yml
 cat <<EOT>> /opt/docker/docker-image.yml
 ---
- - hosts: localhost
+ - hosts: ec2-user
   #root access to user
    become: true
 
@@ -523,7 +523,7 @@ EOT
 touch /opt/docker/docker-container.yml
 cat <<EOT>> /opt/docker/docker-container.yml
 ---
- - hosts: docker_host
+ - hosts: ec2-user
    become: true
 
    tasks:
@@ -552,7 +552,7 @@ cat <<EOT>> /opt/docker/docker-container.yml
 EOT
 cat << EOT > /opt/docker/newrelic.yml
 ---
- - hosts: docker
+ - hosts: ec2-user
    become: true
 
    tasks:
