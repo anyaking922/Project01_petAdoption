@@ -760,7 +760,7 @@ resource "aws_ami_from_instance" "PACD_ami" {
 
 # #Create Hosted Zone
 # resource "aws_route53_zone" "PACD_hosted_zone" {
-#   name = "anyaking922.com"
+# name = "anyaking922.com"
 # }
 
 # resource "aws_route53_record" "PACD_record" {

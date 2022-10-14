@@ -27,7 +27,7 @@ pipeline{
         stage('Sending Artifacts') {
             steps{
                 sshagent(['jenkinskey']) {
-                sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/pet-adoption/target/spring-petclinic-2.4.2.war ec2-user@3.248.183.36:/opt/docker'
+                sh 'scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/pet-adoption/target/spring-petclinic-2.4.2.war ec2-user@52.50.14.179:/opt/docker'
                 }
              }
         }
