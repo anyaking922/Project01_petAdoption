@@ -1,0 +1,30 @@
+-hosts: Docker
+become: true
+
+tasks:
+-name: Login to Dockerhub
+ command: docker login -u anyaking922 -p anyaking922Admin123
+   
+   #Using Sudo Power to pass command of stopping all running container
+ -name: Stop any running container
+  command: docker stop pet adoption-container
+  ignore_errors: yes
+    
+    
+   #Command to remove all stopped container, so we can run a new docker image
+   #This would enable less work
+ -name: Remove Stopped Container
+  command: docker stop firstpipeline-container
+  ignore_errors: yes
+
+ -name: Remove Docker Image
+  command: docker rmi anyaking922/pet-adoption-image
+  ignore_errors: yes
+
+ -name: Pull docker Image from docker Hub
+  command: docker pull devdapo/pet-adoption-image
+  ignore_errors: yes
+  
+ -name: Create Container from image
+  command: docker run -it -d --name pet-adoption-container -p 8080:8085 --restart unless-stopped anyaking922/pet-adoption-image
+  ignore_errors: yes

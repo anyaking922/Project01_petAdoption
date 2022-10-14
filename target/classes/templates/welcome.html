@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'home')}">
+
+  <body>
+    
+      <h1 style="color:Gray;font-size:42px;"> <b>Welcome to Kingsley's Pet Adoption site UPGRADE 2: Picture upload</b></h1>
+
+    <div class="row">
+        <div class="col-md-12">
+          <img class="img-responsive" src="../static/resources/images/20200525_143734.jpg" th:src="@{/resources/images/20200525_143734.jpg}"/>
+        </div>
+    </div>
+
+  </body>
+
+</html>
