@@ -503,7 +503,7 @@ cat <<EOT>> /opt/docker/docker-image.yml
 
    tasks:
    - name: login to dockerhub
-     command: docker login -u cloudhight -p CloudHight_Admin123@
+     command: docker login -u anyaking922 -p anyakingAdmin123
 
    - name: Create docker image from Pet Adoption war file
      command: docker build -t pet-adoption-image .
@@ -511,13 +511,13 @@ cat <<EOT>> /opt/docker/docker-image.yml
        chdir: /opt/docker
 
    - name: Add tag to image
-     command: docker tag pet-adoption-image cloudhight/pet-adoption-image
+     command: docker tag pet-adoption-image anyaking922/pet-adoption-image
 
    - name: Push image to docker hub
-     command: docker push cloudhight/pet-adoption-image
+     command: docker push anyaking922/pet-adoption-image
 
    - name: Remove docker image from Ansible node
-     command: docker rmi pet-adoption-image cloudhight/pet-adoption-image
+     command: docker rmi pet-adoption-image anyaking922/pet-adoption-image
      ignore_errors: yes
 EOT
 touch /opt/docker/docker-container.yml
@@ -528,7 +528,7 @@ cat <<EOT>> /opt/docker/docker-container.yml
 
    tasks:
    - name: login to dockerhub
-     command: docker login -u cloudhight -p CloudHight_Admin123@
+     command: docker login -u anyaking922 -p anyaking922Admin123
 
    - name: Stop any container running
      command: docker stop pet-adoption-container
@@ -539,15 +539,15 @@ cat <<EOT>> /opt/docker/docker-container.yml
      ignore_errors: yes
 
    - name: Remove docker image
-     command: docker rmi cloudhight/pet-adoption-image
+     command: docker rmi anyaking922/pet-adoption-image
      ignore_errors: yes
 
    - name: Pull docker image from dockerhub
-     command: docker pull cloudhight/pet-adoption-image
+     command: docker pull anyaking922/pet-adoption-image
      ignore_errors: yes
 
    - name: Create container from pet adoption image
-     command: docker run -it -d --name pet-adoption-container -p 8080:8085 cloudhight/pet-adoption-image
+     command: docker run -it -d --name pet-adoption-container -p 8080:8085 anyaking922/pet-adoption-image
      ignore_errors: yes
 EOT
 cat << EOT > /opt/docker/newrelic.yml
@@ -571,7 +571,6 @@ cat << EOT > /opt/docker/newrelic.yml
 EOT
 sudo hostnamectl set-hostname Ansible
 EOF
-
   tags = {
     Name = "PACD_Ansible_Host"
   }
@@ -657,11 +656,11 @@ EOF
 }
 
 
-# #Create AMI from EC2 Instance
-# resource "aws_ami_from_instance" "PACD_ami" {
-#   name               = "PACD_ami"
-#   source_instance_id = aws_instance.PACD_Docker_Host.id
-# }
+#Create AMI from EC2 Instance
+resource "aws_ami_from_instance" "PACD_ami" {
+  name               = "PACD_ami"
+  source_instance_id = aws_instance.PACD_Docker_Host.id
+}
 
 
 # ####High Availability, ASG, LB#######
@@ -718,7 +717,7 @@ EOF
 #   image_id                    = aws_ami_from_instance.PACD_ami.id
 #   instance_type               = "t2.medium"
 #   associate_public_ip_address = true
-#   security_groups             = ["${aws_security_group.Jenkins_SG.id}"]
+#   security_groups    = ["${aws_security_group.Jenkins_SG.id}"]
 #   key_name                    = "server_key"
 #   lifecycle {
 #     create_before_destroy = true

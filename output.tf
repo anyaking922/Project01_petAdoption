@@ -16,8 +16,13 @@ output "SonarIP" {
   value = aws_instance.Sonarqube_Server.public_ip
 }
 
+output "alb_dns" {
+  value = aws_lb.PACD_lb.dns_name
+}
 
-
+output "name_servers" {
+  value = aws_route53_zone.PACD_hosted_zone.name_servers
+}
 
 
 
