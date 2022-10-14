@@ -497,13 +497,13 @@ EOT
 touch /opt/docker/docker-image.yml
 cat <<EOT>> /opt/docker/docker-image.yml
 ---
- - hosts: ec2-user
+ - hosts: localhost
   #root access to user
    become: true
 
    tasks:
    - name: login to dockerhub
-     command: docker login -u anyaking922 -p anyakingAdmin123
+     command: docker login -u cloudhight -p CloudHight_Admin123@
 
    - name: Create docker image from Pet Adoption war file
      command: docker build -t pet-adoption-image .
@@ -511,24 +511,24 @@ cat <<EOT>> /opt/docker/docker-image.yml
        chdir: /opt/docker
 
    - name: Add tag to image
-     command: docker tag pet-adoption-image anyaking922/pet-adoption-image
+     command: docker tag pet-adoption-image cloudhight/pet-adoption-image
 
    - name: Push image to docker hub
-     command: docker push anyaking922/pet-adoption-image
+     command: docker push cloudhight/pet-adoption-image
 
    - name: Remove docker image from Ansible node
-     command: docker rmi pet-adoption-image anyaking922/pet-adoption-image
+     command: docker rmi pet-adoption-image cloudhight/pet-adoption-image
      ignore_errors: yes
 EOT
 touch /opt/docker/docker-container.yml
 cat <<EOT>> /opt/docker/docker-container.yml
 ---
- - hosts: ec2-user
+ - hosts: docker_host
    become: true
 
    tasks:
    - name: login to dockerhub
-     command: docker login -u anyaking922 -p anyaking922Admin123
+     command: docker login -u cloudhight -p CloudHight_Admin123@
 
    - name: Stop any container running
      command: docker stop pet-adoption-container
@@ -539,15 +539,15 @@ cat <<EOT>> /opt/docker/docker-container.yml
      ignore_errors: yes
 
    - name: Remove docker image
-     command: docker rmi anyaking922/pet-adoption-image
+     command: docker rmi cloudhight/pet-adoption-image
      ignore_errors: yes
 
    - name: Pull docker image from dockerhub
-     command: docker pull anyaking922/pet-adoption-image
+     command: docker pull cloudhight/pet-adoption-image
      ignore_errors: yes
 
    - name: Create container from pet adoption image
-     command: docker run -it -d --name pet-adoption-container -p 8080:8085 anyaking922/pet-adoption-image
+     command: docker run -it -d --name pet-adoption-container -p 8080:8085 cloudhight/pet-adoption-image
      ignore_errors: yes
 EOT
 cat << EOT > /opt/docker/newrelic.yml
@@ -657,10 +657,15 @@ EOF
 
 
 #Create AMI from EC2 Instance
-resource "aws_ami_from_instance" "PACD_ami" {
-  name               = "PACD_ami"
-  source_instance_id = aws_instance.PACD_Docker_Host.id
+resource "aws_ami_from_instance" "PACD_Docker_Host_AMI" {
+  name               = "PACD_Docker_Host_ami"
+  source_instance_id = data.aws_instance.PACD_Docker_Host.id
+
+  depends_on = [
+    aws_instance.PACD_Docker_Host,
+  ]
 }
+
 
 
 # ####High Availability, ASG, LB#######
@@ -672,7 +677,7 @@ resource "aws_ami_from_instance" "PACD_ami" {
 # resource "aws_lb_target_group" "PACD_tg" {
 #   name     = "PACD-TG"
 #   port     = 8080
-#   protocol = "HTTP"
+#   protocol = HTTP
 #   vpc_id   = aws_vpc.PACD_VPC.id
 #   health_check {
 #     path                = "/"
@@ -684,26 +689,30 @@ resource "aws_ami_from_instance" "PACD_ami" {
 #   }
 # }
 
+# resource "aws_lb_target_group_attachment" "PACD-tg-att" {
+#   target_group_arn = aws_lb_target_group.PACD_tg.arn
+#   target_id        = aws_instance.PACD_Docker_Host.id
+#   port             = 8000
+# }
 
 # #Create Application Load Balancer
 # resource "aws_lb" "PACD_lb" {
-#   name               = "PACD-Lb"
-#   internal           = false
-#   load_balancer_type = "application"
-#   security_groups    = ["${aws_security_group.Jenkins_SG.id}"]
-#   subnets            = ["${aws_subnet.PACD_PubSN1.id}", "${aws_subnet.PACD_PubSN2.id}"]
-
+#   name                       = "PACD-Lb"
+#   internal                   = false
+#   load_balancer_type         = "application"
+#   security_groups            = [aws_security_group.Docker_SG.id]
+#   subnets                    = [aws_subnet.PACD_PubSN1.id, aws_subnet.PACD_PubSN2.id]
 #   enable_deletion_protection = false
 
-#   tags = {
-#     Name = "PACD-Lb"
-#   }
+#   # tags = {
+#   #   Name = "PACD-Lb"
+#   # }
 # }
 
 # # Create Load Balancer Listener
-# resource "aws_lb_listener" "pacd_lb" {
+# resource "aws_lb_listener" "pacd-lb-listener" {
 #   load_balancer_arn = aws_lb.PACD_lb.arn
-#   port              = "80"
+#   port              = 80
 #   protocol          = "HTTP"
 #   default_action {
 #     target_group_arn = aws_lb_target_group.PACD_tg.arn
@@ -711,17 +720,28 @@ resource "aws_ami_from_instance" "PACD_ami" {
 #   }
 # }
 
-# #Create Launch Configuration
+
+
+
+
+
+
+
+# #Create Launch Configuration for Docker 
 # resource "aws_launch_configuration" "PACD_lc" {
 #   name_prefix                 = "PACD_lc"
-#   image_id                    = aws_ami_from_instance.PACD_ami.id
+#   image_id                    = aws_ami_from_instance.PACD_Docker_Host_AMI.id
 #   instance_type               = "t2.medium"
 #   associate_public_ip_address = true
-#   security_groups    = ["${aws_security_group.Jenkins_SG.id}"]
-#   key_name                    = "server_key"
-#   lifecycle {
-#     create_before_destroy = true
-#   }
+#   security_groups             = [aws_security_group.Docker_SG.id]
+#   key_name                    = var.server_key
+#   user_data                   = <<-EOF
+# #!/bin/bash
+# sudo systemctl enable docker
+# sudo setenforce 0
+# sudo systemctl start docker
+# sudo docker start pet-adoption-container
+# EOF
 # }
 
 
@@ -730,16 +750,18 @@ resource "aws_ami_from_instance" "PACD_ami" {
 #   name                 = "PACD-ASG"
 #   launch_configuration = aws_launch_configuration.PACD_lc.name
 #   #Defines the vpc, az and subnets to launch in
-#   vpc_zone_identifier       = ["${aws_subnet.PACD_PubSN1.id}", "${aws_subnet.PACD_PubSN2.id}"]
-#   target_group_arns         = ["${aws_lb_target_group.PACD_tg.arn}"]
+#   vpc_zone_identifier       = [aws_subnet.PACD_PubSN1.id, aws_subnet.PACD_PubSN2.id]
+#   target_group_arns         = [aws_lb_target_group.PACD_tg.arn]
 #   health_check_type         = "EC2"
 #   health_check_grace_period = 30
 #   desired_capacity          = 2
 #   max_size                  = 4
 #   min_size                  = 2
 #   force_delete              = true
-#   lifecycle {
-#     create_before_destroy = true
+#   tag {
+#     key                 = "Name"
+#     value               = "PACD_asg"
+#     propagate_at_launch = true
 #   }
 # }
 
@@ -749,6 +771,7 @@ resource "aws_ami_from_instance" "PACD_ami" {
 # resource "aws_autoscaling_policy" "PACD_asg_policy" {
 #   name                   = "PACD_asg_policy"
 #   policy_type            = "TargetTrackingScaling"
+#   adjustment_type        = "ChangeInCapacity"
 #   autoscaling_group_name = aws_autoscaling_group.PACD_asg.name
 #   target_tracking_configuration {
 #     predefined_metric_specification {
@@ -758,10 +781,6 @@ resource "aws_ami_from_instance" "PACD_ami" {
 #   }
 # }
 
-# #Create Hosted Zone
-# resource "aws_route53_zone" "PACD_hosted_zone" {
-# name = "anyaking922.com"
-# }
 
 # resource "aws_route53_record" "PACD_record" {
 #   zone_id = aws_route53_zone.PACD_hosted_zone.zone_id
@@ -773,3 +792,9 @@ resource "aws_ami_from_instance" "PACD_ami" {
 #     evaluate_target_health = true
 #   }
 # }
+# #Create Hosted Zone
+# resource "aws_route53_zone" "PACD_hosted_zone" {
+#   name = "anyaking922.com"
+# }
+
+
