@@ -656,140 +656,140 @@ EOF
 }
 
 
-#Create AMI from EC2 Instance
-resource "aws_ami_from_instance" "PACD_Docker_Host_AMI" {
-  name               = "PACD_Docker_Host_ami"
-  source_instance_id = data.aws_instance.PACD_Docker_Host.id
+# #Create AMI from EC2 Instance
+# resource "aws_ami_from_instance" "PACD_Docker_Host_AMI" {
+#   name               = "PACD_Docker_Host_ami"
+#   source_instance_id = data.aws_instance.PACD_Docker_Host.id
 
-  depends_on = [
-    aws_instance.PACD_Docker_Host,
-  ]
-}
+#   depends_on = [
+#     aws_instance.PACD_Docker_Host,
+#   ]
+# }
 
-####High Availability, ASG, LB#######
-
-
-#Add High Availability
-
-#Create Target Group
-resource "aws_lb_target_group" "PACD_tg" {
-  name     = "PACD-TG"
-  port     = "8080"
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.PACD_VPC.id
-  health_check {
-    path                = "/"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 15
-    matcher             = "200"
-  }
-}
-
-resource "aws_lb_target_group_attachment" "PACD-tg-att" {
-  target_group_arn = aws_lb_target_group.PACD_tg.arn
-  target_id        = aws_instance.PACD_Docker_Host.id
-  port             = "8000"
-}
-
-#Create Application Load Balancer
-resource "aws_lb" "PACD_lb" {
-  name                       = "PACD-Lb"
-  internal                   = false
-  load_balancer_type         = "application"
-  security_groups            = [aws_security_group.Docker_SG.id]
-  subnets                    = [aws_subnet.PACD_PubSN1.id, aws_subnet.PACD_PubSN2.id]
-  enable_deletion_protection = false
-
-  # tags = {
-  #   Name = "PACD-Lb"
-  # }
-}
-
-# Create Load Balancer Listener
-resource "aws_lb_listener" "pacd-lb-listener" {
-  load_balancer_arn = aws_lb.PACD_lb.arn
-  port              = "80"
-  protocol          = "HTTP"
-  default_action {
-    target_group_arn = aws_lb_target_group.PACD_tg.arn
-    type             = "forward"
-  }
-}
+# ####High Availability, ASG, LB#######
 
 
+# #Add High Availability
 
+# #Create Target Group
+# resource "aws_lb_target_group" "PACD_tg" {
+#   name     = "PACD-TG"
+#   port     = "8080"
+#   protocol = "HTTP"
+#   vpc_id   = aws_vpc.PACD_VPC.id
+#   health_check {
+#     path                = "/"
+#     healthy_threshold   = 2
+#     unhealthy_threshold = 2
+#     timeout             = 5
+#     interval            = 15
+#     matcher             = "200"
+#   }
+# }
 
+# resource "aws_lb_target_group_attachment" "PACD-tg-att" {
+#   target_group_arn = aws_lb_target_group.PACD_tg.arn
+#   target_id        = aws_instance.PACD_Docker_Host.id
+#   port             = "8000"
+# }
 
-#Create Launch Configuration for Docker 
-resource "aws_launch_configuration" "PACD_lc" {
-  name_prefix                 = "PACD_lc"
-  image_id                    = aws_ami_from_instance.PACD_Docker_Host_AMI.id
-  instance_type               = "t2.medium"
-  associate_public_ip_address = true
-  security_groups             = [aws_security_group.Docker_SG.id]
-  key_name                    = aws_key_pair.server_key.id
-  user_data                   = <<-EOF
-#!/bin/bash
-sudo systemctl enable docker
-sudo setenforce 0
-sudo systemctl start docker
-sudo docker start pet-adoption-container
-EOF
-}
+# #Create Application Load Balancer
+# resource "aws_lb" "PACD_lb" {
+#   name                       = "PACD-Lb"
+#   internal                   = false
+#   load_balancer_type         = "application"
+#   security_groups            = [aws_security_group.Docker_SG.id]
+#   subnets                    = [aws_subnet.PACD_PubSN1.id, aws_subnet.PACD_PubSN2.id]
+#   enable_deletion_protection = false
 
+#   # tags = {
+#   #   Name = "PACD-Lb"
+#   # }
+# }
 
-#Create Auto Scaling group
-resource "aws_autoscaling_group" "PACD_asg" {
-  name                 = "PACD-ASG"
-  launch_configuration = aws_launch_configuration.PACD_lc.name
-  #Defines the vpc, az and subnets to launch in
-  vpc_zone_identifier       = [aws_subnet.PACD_PubSN1.id, aws_subnet.PACD_PubSN2.id]
-  target_group_arns         = [aws_lb_target_group.PACD_tg.arn]
-  health_check_type         = "EC2"
-  health_check_grace_period = 30
-  desired_capacity          = 2
-  max_size                  = 4
-  min_size                  = 2
-  force_delete              = true
-  tag {
-    key                 = "Name"
-    value               = "PACD_asg"
-    propagate_at_launch = true
-  }
-}
+# # Create Load Balancer Listener
+# resource "aws_lb_listener" "pacd-lb-listener" {
+#   load_balancer_arn = aws_lb.PACD_lb.arn
+#   port              = "80"
+#   protocol          = "HTTP"
+#   default_action {
+#     target_group_arn = aws_lb_target_group.PACD_tg.arn
+#     type             = "forward"
+#   }
+# }
 
 
 
 
-resource "aws_autoscaling_policy" "PACD_asg_policy" {
-  name                   = "PACD_asg_policy"
-  policy_type            = "TargetTrackingScaling"
-  adjustment_type        = "ChangeInCapacity"
-  autoscaling_group_name = aws_autoscaling_group.PACD_asg.name
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-    target_value = 60.0
-  }
-}
+
+# #Create Launch Configuration for Docker 
+# resource "aws_launch_configuration" "PACD_lc" {
+#   name_prefix                 = "PACD_lc"
+#   image_id                    = aws_ami_from_instance.PACD_Docker_Host_AMI.id
+#   instance_type               = "t2.medium"
+#   associate_public_ip_address = true
+#   security_groups             = [aws_security_group.Docker_SG.id]
+#   key_name                    = aws_key_pair.server_key.id
+#   user_data                   = <<-EOF
+# #!/bin/bash
+# sudo systemctl enable docker
+# sudo setenforce 0
+# sudo systemctl start docker
+# sudo docker start pet-adoption-container
+# EOF
+# }
 
 
-resource "aws_route53_record" "PACD_record" {
-  zone_id = aws_route53_zone.PACD_hosted_zone.zone_id
-  name    = ""
-  type    = "A"
-  alias {
-    name                   = aws_lb.PACD_lb.dns_name
-    zone_id                = aws_lb.PACD_lb.zone_id
-    evaluate_target_health = true
-  }
-}
-#Create Hosted Zone
-resource "aws_route53_zone" "PACD_hosted_zone" {
-  name = "anyaking.com"
-}
+# #Create Auto Scaling group
+# resource "aws_autoscaling_group" "PACD_asg" {
+#   name                 = "PACD-ASG"
+#   launch_configuration = aws_launch_configuration.PACD_lc.name
+#   #Defines the vpc, az and subnets to launch in
+#   vpc_zone_identifier       = [aws_subnet.PACD_PubSN1.id, aws_subnet.PACD_PubSN2.id]
+#   target_group_arns         = [aws_lb_target_group.PACD_tg.arn]
+#   health_check_type         = "EC2"
+#   health_check_grace_period = 30
+#   desired_capacity          = 2
+#   max_size                  = 4
+#   min_size                  = 2
+#   force_delete              = true
+#   tag {
+#     key                 = "Name"
+#     value               = "PACD_asg"
+#     propagate_at_launch = true
+#   }
+# }
+
+
+
+
+# resource "aws_autoscaling_policy" "PACD_asg_policy" {
+#   name                   = "PACD_asg_policy"
+#   policy_type            = "TargetTrackingScaling"
+#   adjustment_type        = "ChangeInCapacity"
+#   autoscaling_group_name = aws_autoscaling_group.PACD_asg.name
+#   target_tracking_configuration {
+#     predefined_metric_specification {
+#       predefined_metric_type = "ASGAverageCPUUtilization"
+#     }
+#     target_value = 60.0
+#   }
+# }
+
+
+# resource "aws_route53_record" "PACD_record" {
+#   zone_id = aws_route53_zone.PACD_hosted_zone.zone_id
+#   name    = ""
+#   type    = "A"
+#   alias {
+#     name                   = aws_lb.PACD_lb.dns_name
+#     zone_id                = aws_lb.PACD_lb.zone_id
+#     evaluate_target_health = true
+#   }
+# }
+# #Create Hosted Zone
+# resource "aws_route53_zone" "PACD_hosted_zone" {
+#   name = "anyaking.com"
+# }
 
 
